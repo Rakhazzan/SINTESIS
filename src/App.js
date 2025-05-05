@@ -23,6 +23,7 @@ const App = () => {
   const [patients, setPatients] = useState([]); // Data will come from Supabase
   const [loadingPatients, setLoadingPatients] = useState(true);
   const [errorPatients, setErrorPatients] = useState(null);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
 
   useEffect(() => {
@@ -53,8 +54,22 @@ const App = () => {
   useEffect(() => {
     if (user) {
       fetchPatients();
+      fetchUnreadMessagesCount(user.id);
+
+       const messagesChannel = supabase
+        .channel('unread_messages')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, () => {
+           fetchUnreadMessagesCount(user.id);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(messagesChannel);
+      };
+
     } else {
       setPatients([]);
+      setUnreadMessagesCount(0);
     }
   }, [user]);
 
@@ -71,8 +86,23 @@ const App = () => {
       setErrorPatients(error.message);
       console.error("Error fetching patients in App:", error.message);
     } else {
-      setPatients(data);
+      setPatients(data || []);
     }
+  };
+
+  const fetchUnreadMessagesCount = async (userId) => {
+      const { count, error } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', userId)
+        .eq('is_read', false);
+
+      if (error) {
+        console.error("Error fetching unread messages count:", error.message);
+        setUnreadMessagesCount(0);
+      } else {
+        setUnreadMessagesCount(count || 0);
+      }
   };
 
 
@@ -174,10 +204,10 @@ const App = () => {
     }
 
     return (
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
         <LayoutSidebar currentPage={currentPage} onNavigate={handleNavigate} />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <LayoutHeader user={user} onLogout={handleLogout} />
+          <LayoutHeader user={user} onLogout={handleLogout} onNavigate={handleNavigate} unreadMessagesCount={unreadMessagesCount} />
           <main className="flex-1 overflow-x-hidden overflow-y-auto">
             {currentPage === 'dashboard' && <DashboardOverview user={user} />}
             {currentPage === 'patients' && (

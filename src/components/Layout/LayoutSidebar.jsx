@@ -6,12 +6,11 @@ const LayoutSidebar = ({ currentPage, onNavigate }) => {
     { name: 'Citas', page: 'appointments' },
     { name: 'Pacientes', page: 'patients' },
     { name: 'Mensajes', page: 'messages' },
-    { name: 'Perfil', page: 'profile' },
   ];
 
   return (
-    <aside className="w-64 bg-gray-800 text-white flex flex-col p-4">
-      <div className="text-2xl font-bold mb-6 text-center">Menú</div>
+    <aside className="w-64 bg-gray-800 dark:bg-gray-900 text-white flex flex-col p-4 transition-colors">
+      <div className="text-2xl font-bold mb-6 text-center text-white">Menú</div>
       <nav className="flex-grow">
         <ul>
           {navItems.map((item) => (
@@ -21,7 +20,7 @@ const LayoutSidebar = ({ currentPage, onNavigate }) => {
                 className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
                   currentPage === item.page
                     ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    : 'text-gray-300 hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white'
                 }`}
               >
                 {item.name}
