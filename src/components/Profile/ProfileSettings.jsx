@@ -110,5 +110,4 @@ const ProfileSettings = ({ user, onUpdateProfile }) => {
     </div>
   );
 };
-
 export default ProfileSettings;
