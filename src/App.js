@@ -101,20 +101,20 @@ const App = () => {
   };
 
   const fetchUnreadMessagesCount = async (userId) => {
-      const { count, error } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', userId)
-        .eq('is_read', false);
-
-      if (error) {
-        console.error("Error fetching unread messages count:", error.message);
-        setUnreadMessagesCount(0);
-      } else {
-        setUnreadMessagesCount(count || 0);
-      }
+    const { count, error } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('receiver_id', userId)
+      .eq('read', false); // ✅ CAMBIADO DE is_read A read
+  
+    if (error) {
+      console.error("Error fetching unread messages count:", error.message);
+      setUnreadMessagesCount(0);
+    } else {
+      setUnreadMessagesCount(count || 0);
+    }
   };
-
+  
 
   const handleLoginSuccess = (loggedInUser) => {
     setUser(loggedInUser);
