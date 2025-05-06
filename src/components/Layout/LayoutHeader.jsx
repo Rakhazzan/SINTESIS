@@ -21,7 +21,7 @@ const LayoutHeader = ({ user, onLogout, onNavigate, unreadMessagesCount }) => {
 
   return (
     <header className="w-full bg-white dark:bg-gray-800 shadow-sm p-4 flex justify-between items-center transition-colors">
-      <h1 className="text-xl font-semibold text-gray-900 dark:text-white">MediFlow</h1>
+      <h1 className="text-xl font-semibold text-gray-900 dark:text-white">DOCSALUT</h1>
       <div className="flex items-center space-x-4">
         <ThemeSwitch />
 
