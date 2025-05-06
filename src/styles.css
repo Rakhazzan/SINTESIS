@@ -1,4 +1,24 @@
-
-        @tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* Estilos según la clase aplicada en <html> por ThemeSwitch */
+html.aurora body {
+        @apply bg-aurora-background text-aurora-text;
+      }
+      
+      html.ocean body {
+        @apply bg-ocean-background text-ocean-text;
+      }
+      
+      html.forest body {
+        @apply bg-forest-background text-forest-text;
+      }
+      
+      html.light body {
+        @apply bg-light-background text-light-text;
+      }
+      
+      /* Opcional: estilo base para body en modo no especificado */
+      body {
+        @apply transition-colors duration-300;
+      }
