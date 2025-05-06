@@ -5,20 +5,48 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredPatients, setFilteredPatients] = useState([]);
+
 
   useEffect(() => {
     fetchPatients();
+  
     const channel = supabase
-      .channel('patients')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, (payload) => {
-        fetchPatients(); // Refetch data on changes
-      })
+      .channel('realtime:patients')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'patients',
+        },
+        (payload) => {
+          console.log('🔄 Cambio en pacientes:', payload);
+          fetchPatients(); // Actualiza los datos cada vez que hay un cambio
+        }
+      )
       .subscribe();
-
+  
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
+  
+
+  useEffect(() => {
+      if (searchTerm) {
+          setFilteredPatients(
+              patients.filter(patient =>
+                  patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  patient.telefono?.includes(searchTerm)
+              )
+          );
+      } else {
+          setFilteredPatients(patients);
+      }
+  }, [searchTerm, patients]);
+
 
   const fetchPatients = async () => {
     setLoading(true);
@@ -50,12 +78,21 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
           Agregar Paciente
         </button>
       </div>
+       <div className="mb-6">
+            <input
+                type="text"
+                placeholder="Buscar paciente por nombre o teléfono..."
+                className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+        </div>
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-colors">
-        {patients.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-400 text-center">No hay pacientes registrados.</p>
+        {filteredPatients.length === 0 ? (
+          <p className="text-gray-600 dark:text-gray-400 text-center">No hay pacientes registrados que coincidan con la búsqueda.</p>
         ) : (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {patients.map((patient) => (
+            {filteredPatients.map((patient) => (
               <li key={patient.id} className="py-4 flex justify-between items-center">
                 <div>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">{patient.name}</p>

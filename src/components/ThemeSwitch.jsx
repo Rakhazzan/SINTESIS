@@ -1,29 +1,61 @@
 import React, { useState, useEffect } from 'react';
 
 const ThemeSwitch = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Keep state for the switch visual
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
-    }
+    const savedThemePreference = localStorage.getItem('themePreference');
+    const initialTheme = savedThemePreference || 'light'; // Default to light if no preference
+    applyTheme(initialTheme);
+    setIsDarkMode(initialTheme === 'dark'); // Set switch state based on applied theme
+
+     // Listen for changes from ProfileSettings
+     const handleStorageChange = () => {
+        const updatedTheme = localStorage.getItem('themePreference');
+        if (updatedTheme) {
+            applyTheme(updatedTheme);
+            setIsDarkMode(updatedTheme === 'dark');
+        }
+     };
+     window.addEventListener('storage', handleStorageChange);
+
+     return () => {
+        window.removeEventListener('storage', handleStorageChange);
+     };
+
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = isDarkMode ? 'light' : 'dark';
-    setIsDarkMode(!isDarkMode);
-    localStorage.setItem('theme', newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+  const applyTheme = (theme) => {
+    document.documentElement.classList.remove('light', 'dark', 'aurora', 'ocean', 'forest');
+    if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+    } else if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+         document.documentElement.classList.remove('light');
+    }
+     else {
+        document.documentElement.classList.add(theme);
+        document.documentElement.classList.remove('dark', 'light'); // Ensure default themes are removed for custom themes
     }
   };
+
+
+  const toggleTheme = () => {
+    // This switch will now only toggle between default light and dark
+    const currentTheme = localStorage.getItem('themePreference') || 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    setIsDarkMode(newTheme === 'dark');
+    localStorage.setItem('themePreference', newTheme);
+    applyTheme(newTheme);
+  };
+
+  // Only render the switch if the current theme is default light or dark
+  const currentAppliedTheme = localStorage.getItem('themePreference') || 'light';
+  if (currentAppliedTheme !== 'light' && currentAppliedTheme !== 'dark') {
+      return null; // Hide the switch for custom themes
+  }
+
 
   return (
     <button

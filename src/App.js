@@ -15,7 +15,7 @@ import ProfileSettings from './components/Profile/ProfileSettings';
 
 const App = () => {
   const [user, setUser] = useState(null);
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [currentPage, setCurrentPage] = useState(localStorage.getItem('currentPage') || 'dashboard'); // Read from localStorage
   const [showPatientForm, setShowPatientForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
@@ -30,9 +30,13 @@ const App = () => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
       if (session?.user) {
-        setCurrentPage('dashboard');
+        // If user logs in, navigate to the last page or dashboard
+        const lastPage = localStorage.getItem('currentPage') || 'dashboard';
+        setCurrentPage(lastPage);
       } else {
+        // If user logs out, go to login page
         setCurrentPage('login');
+        localStorage.removeItem('currentPage');
       }
     });
 
@@ -40,7 +44,8 @@ const App = () => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user || null);
       if (user) {
-        setCurrentPage('dashboard');
+         const lastPage = localStorage.getItem('currentPage') || 'dashboard';
+         setCurrentPage(lastPage);
       } else {
         setCurrentPage('login');
       }
@@ -50,6 +55,11 @@ const App = () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+      localStorage.setItem('currentPage', currentPage);
+  }, [currentPage]);
+
 
   useEffect(() => {
     if (user) {
