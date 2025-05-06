@@ -4,25 +4,53 @@ const ThemeSwitch = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
+    const savedThemePreference = localStorage.getItem('themePreference');
+    if (savedThemePreference) {
+       applyTheme(savedThemePreference);
+       setIsDarkMode(savedThemePreference === 'dark');
     } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
+       // Apply default theme based on system preference or initial state
+       const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+       const initialTheme = systemPrefersDark ? 'dark' : 'light';
+       applyTheme(initialTheme);
+       setIsDarkMode(initialTheme === 'dark');
     }
+
+     // Listen for changes from ProfileSettings
+     const handleStorageChange = () => {
+        const updatedTheme = localStorage.getItem('themePreference');
+        if (updatedTheme) {
+            applyTheme(updatedTheme);
+            setIsDarkMode(updatedTheme === 'dark');
+        }
+     };
+     window.addEventListener('storage', handleStorageChange);
+
+     return () => {
+        window.removeEventListener('storage', handleStorageChange);
+     };
+
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = isDarkMode ? 'light' : 'dark';
-    setIsDarkMode(!isDarkMode);
-    localStorage.setItem('theme', newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
+  const applyTheme = (theme) => {
+    document.documentElement.classList.remove('light', 'dark', 'aurora', 'ocean', 'forest');
+    if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add(theme);
+        document.documentElement.classList.remove('dark'); // Ensure default dark is removed for custom themes
     }
+  };
+
+
+  const toggleTheme = () => {
+    const currentTheme = localStorage.getItem('themePreference') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light'; // Only toggle between default light/dark
+    setIsDarkMode(newTheme === 'dark');
+    localStorage.setItem('themePreference', newTheme);
+    applyTheme(newTheme);
   };
 
   return (

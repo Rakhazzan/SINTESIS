@@ -27,10 +27,10 @@ const ProfileSettings = ({ user, onUpdateProfile }) => {
   }, [user]);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('themePreference');
-    if (savedTheme) {
-      setSelectedTheme(savedTheme);
-      applyTheme(savedTheme);
+    const savedThemePreference = localStorage.getItem('themePreference');
+    if (savedThemePreference) {
+      setSelectedTheme(savedThemePreference);
+      applyTheme(savedThemePreference);
     } else {
        // Apply default theme based on system preference or initial state
        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -200,3 +200,4 @@ const ProfileSettings = ({ user, onUpdateProfile }) => {
 };
 
 export default ProfileSettings;
+// DONE

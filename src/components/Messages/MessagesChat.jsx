@@ -12,18 +12,28 @@ const MessagesChat = ({ user }) => {
 
   useEffect(() => {
     fetchUsers();
-  }, [user]); // Fetch users when user changes
+  }, [user]);
 
   useEffect(() => {
     if (selectedUser) {
       fetchMessages(selectedUser.id);
       const channel = supabase
         .channel(`chat_${user?.id}_${selectedUser.id}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `(sender_id=eq.${selectedUser.id}.and.receiver_id=eq.${user?.id})` }, (payload) => {
-           setMessages((prev) => [...prev, payload.new]);
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `(sender_id=eq.${selectedUser.id},receiver_id=eq.${user?.id})`
+        }, (payload) => {
+          setMessages((prev) => [...prev, payload.new]);
         })
-         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `(sender_id=eq.${user?.id}.and.receiver_id=eq.${selectedUser.id})` }, (payload) => {
-           setMessages((prev) => [...prev, payload.new]);
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `(sender_id=eq.${user?.id},receiver_id=eq.${selectedUser.id})`
+        }, (payload) => {
+          setMessages((prev) => [...prev, payload.new]);
         })
         .subscribe();
 
@@ -31,7 +41,7 @@ const MessagesChat = ({ user }) => {
         supabase.removeChannel(channel);
       };
     } else {
-        setMessages([]);
+      setMessages([]);
     }
   }, [selectedUser, user]);
 
@@ -42,18 +52,19 @@ const MessagesChat = ({ user }) => {
   }, [messages]);
 
   const fetchUsers = async () => {
-     const { data, error } = await supabase
-      .from('users')
-      .select('id, nombre, email')
-      .neq('id', user?.id); // Exclude the current user
-
+    const { data, error } = await supabase
+      .from('app_users') // Usar la vista
+      .select('id, email, full_name')
+      .neq('id', user.id);
+  
     if (error) {
-      console.error("Error fetching users:", error.message);
-    } else {
-      setUsers(data || []);
+      console.error('Error fetching users:', error.message);
+      return [];
     }
+  
+    return data;
   };
-
+  
 
   const fetchMessages = async (otherUserId) => {
     setLoading(true);
@@ -68,29 +79,25 @@ const MessagesChat = ({ user }) => {
       setError(error.message);
       console.error("Error fetching messages:", error.message);
     } else {
-      // Filter messages relevant to the current chat
       const relevantMessages = data.filter(msg =>
         (msg.sender_id === user?.id && msg.receiver_id === otherUserId) ||
         (msg.sender_id === otherUserId && msg.receiver_id === user?.id)
       );
       setMessages(relevantMessages || []);
 
-      // Mark messages as read
-      if (relevantMessages.length > 0) {
-          const unreadMessageIds = relevantMessages
-            .filter(msg => msg.receiver_id === user?.id && !msg.is_read)
-            .map(msg => msg.id);
+      const unreadMessageIds = relevantMessages
+        .filter(msg => msg.receiver_id === user?.id && !msg.read)
+        .map(msg => msg.id);
 
-          if (unreadMessageIds.length > 0) {
-              const { error: updateError } = await supabase
-                .from('messages')
-                .update({ is_read: true })
-                .in('id', unreadMessageIds);
+      if (unreadMessageIds.length > 0) {
+        const { error: updateError } = await supabase
+          .from('messages')
+          .update({ read: true })
+          .in('id', unreadMessageIds);
 
-              if (updateError) {
-                console.error("Error marking messages as read:", updateError.message);
-              }
-          }
+        if (updateError) {
+          console.error("Error marking messages as read:", updateError.message);
+        }
       }
     }
   };
@@ -102,8 +109,7 @@ const MessagesChat = ({ user }) => {
         sender_id: user?.id,
         receiver_id: selectedUser.id,
         message: newMessage,
-        is_read: false, // Mark as unread initially
-        // timestamp se puede generar en la base de datos
+        read: false
       };
 
       const { error } = await supabase
@@ -121,7 +127,6 @@ const MessagesChat = ({ user }) => {
 
   return (
     <div className="flex h-full bg-gray-50 dark:bg-gray-900 transition-colors">
-      {/* User List Sidebar */}
       <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white p-4 border-b border-gray-200 dark:border-gray-700">Usuarios</h3>
         <ul className="flex-grow overflow-y-auto">
@@ -138,7 +143,6 @@ const MessagesChat = ({ user }) => {
         </ul>
       </div>
 
-      {/* Chat Window */}
       <div className="flex-1 flex flex-col">
         {selectedUser ? (
           <>
@@ -149,9 +153,9 @@ const MessagesChat = ({ user }) => {
               {loading ? (
                 <div className="text-center text-gray-600 dark:text-gray-400">Cargando mensajes...</div>
               ) : error ? (
-                 <div className="text-center text-red-500">Error: {error}</div>
+                <div className="text-center text-red-500">Error: {error}</div>
               ) : messages.length === 0 ? (
-                 <div className="text-center text-gray-600 dark:text-gray-400">Inicia una conversación.</div>
+                <div className="text-center text-gray-600 dark:text-gray-400">Inicia una conversación.</div>
               ) : (
                 messages.map((message) => (
                   <div
