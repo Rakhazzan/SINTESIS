@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../../services/supabase';
 import ThemeSwitch from '../ThemeSwitch';
 
 const LayoutHeader = ({ user, onLogout, onNavigate, unreadMessagesCount }) => {

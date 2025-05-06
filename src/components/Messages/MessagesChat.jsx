@@ -12,7 +12,7 @@ const MessagesChat = ({ user }) => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [user]); // Fetch users when user changes
 
   useEffect(() => {
     if (selectedUser) {
@@ -60,7 +60,7 @@ const MessagesChat = ({ user }) => {
     const { data, error } = await supabase
       .from('messages')
       .select('*')
-      .or(`(sender_id.eq.${user?.id},receiver_id.eq.${user?.id}),(sender_id.eq.${otherUserId},receiver_id.eq.${otherUserId})`)
+      .or(`(sender_id.eq.${user?.id},receiver_id.eq.${otherUserId}),(sender_id.eq.${otherUserId},receiver_id.eq.${user?.id})`)
       .order('timestamp', { ascending: true });
 
     setLoading(false);
@@ -74,6 +74,24 @@ const MessagesChat = ({ user }) => {
         (msg.sender_id === otherUserId && msg.receiver_id === user?.id)
       );
       setMessages(relevantMessages || []);
+
+      // Mark messages as read
+      if (relevantMessages.length > 0) {
+          const unreadMessageIds = relevantMessages
+            .filter(msg => msg.receiver_id === user?.id && !msg.is_read)
+            .map(msg => msg.id);
+
+          if (unreadMessageIds.length > 0) {
+              const { error: updateError } = await supabase
+                .from('messages')
+                .update({ is_read: true })
+                .in('id', unreadMessageIds);
+
+              if (updateError) {
+                console.error("Error marking messages as read:", updateError.message);
+              }
+          }
+      }
     }
   };
 
@@ -84,6 +102,7 @@ const MessagesChat = ({ user }) => {
         sender_id: user?.id,
         receiver_id: selectedUser.id,
         message: newMessage,
+        is_read: false, // Mark as unread initially
         // timestamp se puede generar en la base de datos
       };
 

@@ -9,6 +9,15 @@ const ProfileSettings = ({ user, onUpdateProfile }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState('light'); // Default theme
+
+  const themes = [
+    { name: 'Default Claro', value: 'light' },
+    { name: 'Default Oscuro', value: 'dark' },
+    { name: 'Aurora', value: 'aurora' },
+    { name: 'Ocean', value: 'ocean' },
+    { name: 'Forest', value: 'forest' },
+  ];
 
   useEffect(() => {
     if (user) {
@@ -16,6 +25,21 @@ const ProfileSettings = ({ user, onUpdateProfile }) => {
       fetchProfileData(user.id);
     }
   }, [user]);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('themePreference');
+    if (savedTheme) {
+      setSelectedTheme(savedTheme);
+      applyTheme(savedTheme);
+    } else {
+       // Apply default theme based on system preference or initial state
+       const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+       const initialTheme = systemPrefersDark ? 'dark' : 'light';
+       setSelectedTheme(initialTheme);
+       applyTheme(initialTheme);
+    }
+  }, []);
+
 
   const fetchProfileData = async (userId) => {
     const { data, error } = await supabase
@@ -64,6 +88,26 @@ const ProfileSettings = ({ user, onUpdateProfile }) => {
       // onUpdateProfile({ ...user, user_metadata: { ...user.user_metadata, nombre: name, telefono: phone, ocupacion: occupation } });
     }
   };
+
+  const handleThemeChange = (e) => {
+    const newTheme = e.target.value;
+    setSelectedTheme(newTheme);
+    localStorage.setItem('themePreference', newTheme);
+    applyTheme(newTheme);
+  };
+
+  const applyTheme = (theme) => {
+    document.documentElement.classList.remove('light', 'dark', 'aurora', 'ocean', 'forest');
+    if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.add(theme);
+        document.documentElement.classList.remove('dark'); // Ensure default dark is removed for custom themes
+    }
+  };
+
 
   return (
     <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
@@ -119,6 +163,25 @@ const ProfileSettings = ({ user, onUpdateProfile }) => {
               onChange={(e) => setOccupation(e.target.value)}
             />
           </div>
+
+          {/* Theme Selector */}
+          <div>
+             <label htmlFor="theme-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Tema Visual
+            </label>
+            <select
+              id="theme-select"
+              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
+              value={selectedTheme}
+              onChange={handleThemeChange}
+            >
+              {themes.map(theme => (
+                <option key={theme.value} value={theme.value}>{theme.name}</option>
+              ))}
+            </select>
+          </div>
+
+
           {error && <p className="text-sm text-red-500 text-center">{error}</p>}
           {success && <p className="text-sm text-emerald-500 text-center">{success}</p>}
           <div>
