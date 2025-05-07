@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
+import GlassmorphicCard from '../GlassmorphicCard';
+import ModernButton from '../ModernButton';
+import ModernInput from '../ModernInput';
+import ModernTextarea from '../ModernTextarea';
+import ModernSelect from '../ModernSelect';
+
 
 const PatientsForm = ({ patient, onSave, onCancel }) => {
   const [name, setName] = useState('');
@@ -72,100 +78,97 @@ const PatientsForm = ({ patient, onSave, onCancel }) => {
     }
   };
 
+  const genderOptions = [
+      { value: '', label: 'Selecciona' },
+      { value: 'Masculino', label: 'Masculino' },
+      { value: 'Femenino', label: 'Femenino' },
+      { value: 'Otro', label: 'Otro' },
+  ];
+
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center" role="dialog" aria-modal="true" aria-labelledby="patient-form-title" aria-describedby="patient-form-description">
-      <div className="relative p-8 bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-lg transition-colors">
-        <h2 id="patient-form-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50" role="dialog" aria-modal="true" aria-labelledby="patient-form-title" aria-describedby="patient-form-description">
+      <GlassmorphicCard className="w-full max-w-md">
+        <h2 id="patient-form-title" className="text-2xl font-bold text-white mb-6 text-center">
           {patient ? 'Editar Paciente' : 'Agregar Paciente'}
         </h2>
         <p id="patient-form-description" className="sr-only">Formulario para {patient ? 'editar' : 'agregar'} información del paciente.</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-300">
               Nombre
             </label>
-            <input
+            <ModernInput
               id="name"
               type="text"
               required
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div>
-            <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="birthDate" className="block text-sm font-medium text-gray-300">
               Fecha de Nacimiento
             </label>
-            <input
+            <ModernInput
               id="birthDate"
               type="date"
               required
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
             />
           </div>
            <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-300">
               Teléfono
             </label>
-            <input
+            <ModernInput
               id="phone"
               type="tel"
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
           </div>
           <div>
-            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="gender" className="block text-sm font-medium text-gray-300">
               Género
             </label>
-            <select
+            <ModernSelect
               id="gender"
               required
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={gender}
               onChange={(e) => setGender(e.target.value)}
-            >
-              <option value="">Selecciona</option>
-              <option value="Masculino">Masculino</option>
-              <option value="Femenino">Femenino</option>
-              <option value="Otro">Otro</option>
-            </select>
+              options={genderOptions}
+            />
           </div>
           <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-300">
               Notas
             </label>
-            <textarea
+            <ModernTextarea
               id="notes"
               rows="3"
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition resize-none"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-            ></textarea>
+            ></ModernTextarea>
           </div>
-          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+          {error && <p className="text-sm text-red-400 text-center">{error}</p>}
           <div className="flex justify-end space-x-4">
-            <button
+            <ModernButton
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              className="bg-gray-600 hover:bg-gray-700 from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-600"
             >
               Cancelar
-            </button>
-            <button
+            </ModernButton>
+            <ModernButton
               type="submit"
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar'}
-            </button>
+            </ModernButton>
           </div>
         </form>
-      </div>
+      </GlassmorphicCard>
     </div>
   );
 };

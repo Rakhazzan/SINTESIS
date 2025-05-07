@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
+import GlassmorphicCard from '../GlassmorphicCard';
 
 const DashboardOverview = ({ user }) => {
   const [totalPatients, setTotalPatients] = useState(0);
@@ -69,49 +70,49 @@ const DashboardOverview = ({ user }) => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Bienvenido, {user?.user_metadata?.nombre || user?.email || 'Usuario'}</h2>
+    <div className="p-6">
+      <h2 className="text-2xl font-bold text-white mb-6">Bienvenido, {user?.user_metadata?.nombre || user?.email || 'Usuario'}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Tarjeta de Total Pacientes */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-colors">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Total Pacientes</h3>
+        <GlassmorphicCard>
+          <h3 className="text-lg font-semibold text-white mb-4">Total Pacientes</h3>
           {loadingPatients ? (
-            <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
+            <p className="text-gray-300">Cargando...</p>
           ) : errorPatients ? (
-            <p className="text-red-500">Error: {errorPatients}</p>
+            <p className="text-red-400">Error: {errorPatients}</p>
           ) : (
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalPatients}</p>
+            <p className="text-3xl font-bold text-modern-primary">{totalPatients}</p>
           )}
-        </div>
+        </GlassmorphicCard>
 
         {/* Tarjeta de Citas Próximas */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 col-span-1 md:col-span-2 transition-colors">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Citas Próximas</h3>
+        <GlassmorphicCard className="col-span-1 md:col-span-2">
+          <h3 className="text-lg font-semibold text-white mb-4">Citas Próximas</h3>
           {loadingAppointments ? (
-             <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
+             <p className="text-gray-300">Cargando...</p>
           ) : errorAppointments ? (
-             <p className="text-red-500">Error: {errorAppointments}</p>
+             <p className="text-red-400">Error: {errorAppointments}</p>
           ) : upcomingAppointments.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400">No hay citas próximas.</p>
+            <p className="text-gray-300">No hay citas próximas.</p>
           ) : (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+            <ul className="divide-y divide-white divide-opacity-10">
               {upcomingAppointments.map((appointment) => (
                 <li key={appointment.id} className="py-3">
-                  <p className="text-gray-900 dark:text-white font-medium">{appointment.title}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Paciente: {appointment.patients?.name || 'Desconocido'}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Fecha: {appointment.date} Hora: {appointment.time}</p>
+                  <p className="text-white font-medium">{appointment.title}</p>
+                  <p className="text-sm text-gray-300">Paciente: {appointment.patients?.name || 'Desconocido'}</p>
+                  <p className="text-sm text-gray-300">Fecha: {appointment.date} Hora: {appointment.time}</p>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </GlassmorphicCard>
 
         {/* Tarjeta de Mensajes Nuevos (Placeholder) */}
-         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-colors">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Mensajes Nuevos</h3>
-          <p className="text-gray-600 dark:text-gray-400">Verifica la sección de Mensajes.</p>
+         <GlassmorphicCard>
+          <h3 className="text-lg font-semibold text-white mb-4">Mensajes Nuevos</h3>
+          <p className="text-gray-300">Verifica la sección de Mensajes.</p>
           {/* Contenido dinámico de mensajes */}
-        </div>
+        </GlassmorphicCard>
       </div>
     </div>
   );

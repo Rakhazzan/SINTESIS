@@ -9,7 +9,7 @@ const LayoutSidebar = ({ currentPage, onNavigate }) => {
   ];
 
   return (
-    <aside className="w-64 bg-gray-800 dark:bg-gray-900 text-white flex flex-col p-4 transition-colors">
+    <aside className="w-64 bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg text-white flex flex-col p-4 transition-colors z-30">
       <div className="text-2xl font-bold mb-6 text-center text-white">Menú</div>
       <nav className="flex-grow">
         <ul>
@@ -19,8 +19,8 @@ const LayoutSidebar = ({ currentPage, onNavigate }) => {
                 onClick={() => onNavigate(item.page)}
                 className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
                   currentPage === item.page
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white'
+                    ? 'bg-modern-primary text-white'
+                    : 'text-gray-300 hover:bg-white hover:bg-opacity-10 hover:text-white'
                 }`}
               >
                 {item.name}

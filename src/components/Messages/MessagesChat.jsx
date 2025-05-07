@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
+import GlassmorphicCard from '../GlassmorphicCard';
+import ModernInput from '../ModernInput';
+import ModernButton from '../ModernButton';
 
 const MessagesChat = ({ user }) => {
   const [messages, setMessages] = useState([]);
@@ -25,7 +28,7 @@ const MessagesChat = ({ user }) => {
             event: 'INSERT',
             schema: 'public',
             table: 'messages',
-            filter: `(sender_id=eq.${selectedUser.id},receiver_id=eq.${user?.id})`
+            filter: `(sender_id=eq.${selectedUser.id}.and.receiver_id=eq.${user?.id})`
           },
           (payload) => {
             setMessages((prev) => [...prev, payload.new]);
@@ -37,7 +40,7 @@ const MessagesChat = ({ user }) => {
             event: 'INSERT',
             schema: 'public',
             table: 'messages',
-            filter: `(sender_id=eq.${user?.id},receiver_id=eq.${selectedUser.id})`
+            filter: `(sender_id=eq.${user?.id}.and.receiver_id=eq.${selectedUser.id})`
           },
           (payload) => {
             setMessages((prev) => [...prev, payload.new]);
@@ -61,8 +64,8 @@ const MessagesChat = ({ user }) => {
 
   const fetchUsers = async () => {
     const { data, error } = await supabase
-      .from('app_users') // Cambia a 'users' si es necesario
-      .select('id, email, full_name')
+      .from('users') // Assuming 'users' table has id, email, nombre
+      .select('id, nombre')
       .neq('id', user?.id);
 
     if (error) {
@@ -94,13 +97,13 @@ const MessagesChat = ({ user }) => {
       setMessages(relevantMessages);
 
       const unreadMessageIds = relevantMessages
-        .filter((msg) => msg.receiver_id === user?.id && !msg.read)
+        .filter((msg) => msg.receiver_id === user?.id && !msg.is_read) // Use is_read as per schema
         .map((msg) => msg.id);
 
       if (unreadMessageIds.length > 0) {
         const { error: updateError } = await supabase
           .from('messages')
-          .update({ read: true })
+          .update({ is_read: true }) // Use is_read as per schema
           .in('id', unreadMessageIds);
 
         if (updateError) {
@@ -117,7 +120,7 @@ const MessagesChat = ({ user }) => {
         sender_id: user?.id,
         receiver_id: selectedUser.id,
         message: newMessage,
-        read: false
+        is_read: false // Use is_read as per schema
       };
 
       const { error } = await supabase.from('messages').insert([messageData]);
@@ -132,36 +135,38 @@ const MessagesChat = ({ user }) => {
   };
 
   return (
-    <div className="flex h-full bg-gray-50 dark:bg-gray-900 transition-colors">
-      <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white p-4 border-b border-gray-200 dark:border-gray-700">Usuarios</h3>
+    <div className="flex h-full p-6">
+      {/* User List Sidebar */}
+      <GlassmorphicCard className="w-64 mr-6 flex flex-col">
+        <h3 className="text-lg font-semibold text-white p-4 border-b border-white border-opacity-10">Usuarios</h3>
         <ul className="flex-grow overflow-y-auto">
           {users.map(otherUser => (
             <li key={otherUser.id}>
               <button
                 onClick={() => setSelectedUser(otherUser)}
-                className={`w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${selectedUser?.id === otherUser.id ? 'bg-blue-100 dark:bg-blue-800' : ''}`}
+                className={`w-full text-left px-4 py-3 hover:bg-white hover:bg-opacity-10 transition-colors rounded-md ${selectedUser?.id === otherUser.id ? 'bg-white bg-opacity-20' : ''}`}
               >
-                <p className="text-gray-900 dark:text-white font-medium">{otherUser.nombre || otherUser.email}</p>
+                <p className="text-white font-medium">{otherUser.nombre || otherUser.email}</p>
               </button>
             </li>
           ))}
         </ul>
-      </div>
+      </GlassmorphicCard>
 
-      <div className="flex-1 flex flex-col">
+      {/* Chat Window */}
+      <GlassmorphicCard className="flex-1 flex flex-col">
         {selectedUser ? (
           <>
-            <div className="bg-white dark:bg-gray-800 shadow-sm p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedUser.nombre || selectedUser.email}</h3>
+            <div className="shadow-sm p-4 border-b border-white border-opacity-10">
+              <h3 className="text-lg font-semibold text-white">{selectedUser.nombre || selectedUser.email}</h3>
             </div>
-            <div ref={chatContainerRef} className="flex-grow overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 space-y-4">
+            <div ref={chatContainerRef} className="flex-grow overflow-y-auto p-4 space-y-4">
               {loading ? (
-                <div className="text-center text-gray-600 dark:text-gray-400">Cargando mensajes...</div>
+                <div className="text-center text-gray-300">Cargando mensajes...</div>
               ) : error ? (
-                <div className="text-center text-red-500">Error: {error}</div>
+                <div className="text-center text-red-400">Error: {error}</div>
               ) : messages.length === 0 ? (
-                <div className="text-center text-gray-600 dark:text-gray-400">Inicia una conversación.</div>
+                <div className="text-center text-gray-300">Inicia una conversación.</div>
               ) : (
                 messages.map((message) => (
                   <div
@@ -171,8 +176,8 @@ const MessagesChat = ({ user }) => {
                     <div
                       className={`max-w-xs px-4 py-2 rounded-lg ${
                         message.sender_id === user?.id
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                          ? 'bg-modern-primary text-white'
+                          : 'bg-white bg-opacity-10 text-gray-200'
                       }`}
                     >
                       <p className="text-sm">{message.message}</p>
@@ -182,29 +187,28 @@ const MessagesChat = ({ user }) => {
                 ))
               )}
             </div>
-            <form onSubmit={handleSendMessage} className="mt-4 flex space-x-3 p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-              <input
+            <form onSubmit={handleSendMessage} className="mt-4 flex space-x-3 p-4 border-t border-white border-opacity-10">
+              <ModernInput
                 type="text"
                 placeholder="Escribe un mensaje..."
-                className="flex-grow px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
+                className="flex-grow"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
               />
-              <button
+              <ModernButton
                 type="submit"
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50"
                 disabled={!newMessage.trim()}
               >
                 Enviar
-              </button>
+              </ModernButton>
             </form>
           </>
         ) : (
-          <div className="flex-grow flex items-center justify-center text-gray-600 dark:text-gray-400">
+          <div className="flex-grow flex items-center justify-center text-gray-300">
             Selecciona un usuario para empezar a chatear.
           </div>
         )}
-      </div>
+      </GlassmorphicCard>
     </div>
   );
 };

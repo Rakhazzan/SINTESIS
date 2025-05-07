@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
+import GlassmorphicCard from '../GlassmorphicCard';
+import ModernButton from '../ModernButton';
+import ModernInput from '../ModernInput';
+import ModernTextarea from '../ModernTextarea';
 
 const AppointmentsForm = ({ appointment, patients, onSave, onCancel }) => {
   const [title, setTitle] = useState('');
@@ -112,73 +116,68 @@ const AppointmentsForm = ({ appointment, patients, onSave, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center" role="dialog" aria-modal="true" aria-labelledby="appointment-form-title" aria-describedby="appointment-form-description">
-      <div className="relative p-8 bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-lg transition-colors">
-        <h2 id="appointment-form-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50" role="dialog" aria-modal="true" aria-labelledby="appointment-form-title" aria-describedby="appointment-form-description">
+      <GlassmorphicCard className="w-full max-w-md">
+        <h2 id="appointment-form-title" className="text-2xl font-bold text-white mb-6 text-center">
           {appointment ? 'Editar Cita' : 'Agregar Cita'}
         </h2>
         <p id="appointment-form-description" className="sr-only">Formulario para {appointment ? 'editar' : 'agregar'} información de la cita.</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-300">
               Título
             </label>
-            <input
+            <ModernInput
               id="title"
               type="text"
               required
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-300">
               Descripción
             </label>
-            <textarea
+            <ModernTextarea
               id="description"
               rows="3"
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition resize-none"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-            ></textarea>
+            ></ModernTextarea>
           </div>
           <div>
-            <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="date" className="block text-sm font-medium text-gray-300">
               Fecha
             </label>
-            <input
+            <ModernInput
               id="date"
               type="date"
               required
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
           <div>
-            <label htmlFor="time" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="time" className="block text-sm font-medium text-gray-300">
               Hora
             </label>
-            <input
+            <ModernInput
               id="time"
               type="time"
               required
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={time}
               onChange={(e) => setTime(e.target.value)}
             />
           </div>
           <div className="relative">
-            <label htmlFor="patient-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="patient-search" className="block text-sm font-medium text-gray-300">
               Paciente
             </label>
-            <input
+            <ModernInput
               id="patient-search"
               type="text"
               placeholder="Buscar paciente por nombre o teléfono"
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -186,13 +185,13 @@ const AppointmentsForm = ({ appointment, patients, onSave, onCancel }) => {
               }}
             />
             {filteredPatients.length > 0 && (
-              <ul className="absolute z-10 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto">
+              <ul className="absolute z-10 w-full bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto ring-1 ring-white ring-opacity-10">
                 {filteredPatients.map(patient => (
                   <li key={patient.id}>
                     <button
                       type="button"
                       onClick={() => handlePatientSelect(patient)}
-                      className="w-full text-left px-4 py-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                      className="w-full text-left px-4 py-2 text-gray-200 hover:bg-white hover:bg-opacity-10 transition-colors"
                     >
                       {patient.name} ({patient.telefono})
                     </button>
@@ -201,28 +200,27 @@ const AppointmentsForm = ({ appointment, patients, onSave, onCancel }) => {
               </ul>
             )}
              {patientId && searchTerm && filteredPatients.length === 0 && (
-                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Paciente seleccionado: {searchTerm}</p>
+                 <p className="mt-1 text-sm text-gray-400">Paciente seleccionado: {searchTerm}</p>
              )}
           </div>
-          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+          {error && <p className="text-sm text-red-400 text-center">{error}</p>}
           <div className="flex justify-end space-x-4">
-            <button
+            <ModernButton
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              className="bg-gray-600 hover:bg-gray-700 from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-600"
             >
               Cancelar
-            </button>
-            <button
+            </ModernButton>
+            <ModernButton
               type="submit"
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
               disabled={loading || !patientId}
             >
               {loading ? 'Guardando...' : 'Guardar'}
-            </button>
+            </ModernButton>
           </div>
         </form>
-      </div>
+      </GlassmorphicCard>
     </div>
   );
 };

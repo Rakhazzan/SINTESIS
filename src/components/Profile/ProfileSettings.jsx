@@ -1,81 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../services/supabase';
+import React, { useState, useEffect } from "react";
+import { supabase } from "../../services/supabase";
+import GlassmorphicCard from "../GlassmorphicCard";
+import ModernButton from "../ModernButton";
+import ModernInput from "../ModernInput";
+import ModernSelect from "../ModernSelect";
 
 const ProfileSettings = ({ user, onUpdateProfile }) => {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [occupation, setOccupation] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [occupation, setOccupation] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState('light'); // Default theme
+  const [selectedTheme, setSelectedTheme] = useState("light"); // Default theme
 
   const themes = [
-    { name: 'Default Claro', value: 'light' },
-    { name: 'Default Oscuro', value: 'dark' },
-    { name: 'Aurora', value: 'aurora' },
-    { name: 'Ocean', value: 'ocean' },
-    { name: 'Forest', value: 'forest' },
+    { name: "Default Claro", value: "light" },
+    { name: "Aurora", value: "aurora" },
+    { name: "Ocean", value: "ocean" },
+    { name: "Forest", value: "forest" },
   ];
 
   useEffect(() => {
     if (user) {
-      setEmail(user.email || '');
+      setEmail(user.email || "");
       fetchProfileData(user.id);
     }
   }, [user]);
 
   useEffect(() => {
-    const savedThemePreference = localStorage.getItem('themePreference');
-    if (savedThemePreference) {
+    const savedThemePreference = localStorage.getItem("themePreference");
+    if (
+      savedThemePreference &&
+      themes.some((theme) => theme.value === savedThemePreference)
+    ) {
       setSelectedTheme(savedThemePreference);
       applyTheme(savedThemePreference);
     } else {
-       // Apply default theme based on system preference or initial state
-       const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-       const initialTheme = systemPrefersDark ? 'dark' : 'light';
-       setSelectedTheme(initialTheme);
-       applyTheme(initialTheme);
+      // Apply default light theme if no valid preference
+      setSelectedTheme("light");
+      applyTheme("light");
     }
   }, []);
 
-
   const fetchProfileData = async (userId) => {
     const { data, error } = await supabase
-      .from('users') // Assuming 'users' table stores profile data
-      .select('nombre, telefono, ocupacion')
-      .eq('id', userId)
+      .from("users") // Assuming 'users' table stores profile data
+      .select("nombre, telefono, ocupacion")
+      .eq("id", userId)
       .single();
 
     if (error) {
       console.error("Error fetching profile data:", error.message);
-      setName('');
-      setPhone('');
-      setOccupation('');
+      setName("");
+      setPhone("");
+      setOccupation("");
     } else {
-      setName(data?.nombre || '');
-      setPhone(data?.telefono || '');
-      setOccupation(data?.ocupacion || '');
+      setName(data?.nombre || "");
+      setPhone(data?.telefono || "");
+      setOccupation(data?.ocupacion || "");
     }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     setLoading(true);
 
     if (!user) {
-      setError('Usuario no autenticado.');
+      setError("Usuario no autenticado.");
       setLoading(false);
       return;
     }
 
     const { error } = await supabase
-      .from('users') // Update 'users' table
+      .from("users") // Update 'users' table
       .update({ nombre: name, telefono: phone, ocupacion: occupation })
-      .eq('id', user.id);
+      .eq("id", user.id);
 
     setLoading(false);
 
@@ -83,7 +86,7 @@ const ProfileSettings = ({ user, onUpdateProfile }) => {
       setError(error.message);
       console.error("Error updating profile:", error.message);
     } else {
-      setSuccess('Perfil actualizado con éxito.');
+      setSuccess("Perfil actualizado con éxito.");
       // Optionally call onUpdateProfile if needed in parent
       // onUpdateProfile({ ...user, user_metadata: { ...user.user_metadata, nombre: name, telefono: phone, ocupacion: occupation } });
     }
@@ -92,73 +95,88 @@ const ProfileSettings = ({ user, onUpdateProfile }) => {
   const handleThemeChange = (e) => {
     const newTheme = e.target.value;
     setSelectedTheme(newTheme);
-    localStorage.setItem('themePreference', newTheme);
+    localStorage.setItem("themePreference", newTheme);
     applyTheme(newTheme);
   };
 
   const applyTheme = (theme) => {
-    document.documentElement.classList.remove('light', 'dark', 'aurora', 'ocean', 'forest');
-    if (theme === 'light') {
-        document.documentElement.classList.remove('dark');
-    } else if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove(
+      "light",
+      "dark",
+      "aurora",
+      "ocean",
+      "forest"
+    );
+    if (theme === "light") {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
     } else {
-        document.documentElement.classList.add(theme);
-        document.documentElement.classList.remove('dark'); // Ensure default dark is removed for custom themes
+      document.documentElement.classList.add(theme);
+      document.documentElement.classList.remove("dark", "light"); // Ensure default themes are removed for custom themes
     }
   };
 
-
   return (
-    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Configuración de Perfil</h2>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 max-w-md mx-auto transition-colors">
+    <div className="p-6">
+      <h2 className="text-2xl font-bold text-white mb-6">
+        Configuración de Perfil
+      </h2>
+      <GlassmorphicCard className="max-w-md mx-auto">
         <form onSubmit={handleUpdate} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-300"
+            >
               Correo Electrónico
             </label>
-            <input
+            <ModernInput
               id="email"
               type="email"
               required
-              className="w-full mt-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm cursor-not-allowed text-gray-900 dark:text-white"
               value={email}
-              disabled // Email generally not changed easily
+              disabled
+              onChange={() => {}}
             />
           </div>
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="nombre"
+              className="block text-sm font-medium text-gray-300"
+            >
               Nombre
             </label>
-            <input
+            <ModernInput
               id="name"
               type="text"
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
-           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div>
+            <label
+              htmlFor="phone"
+              className="block text-sm font-medium text-gray-300"
+            >
               Teléfono
             </label>
-            <input
+            <ModernInput
               id="phone"
               type="tel"
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
           </div>
-           <div>
-            <label htmlFor="occupation" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div>
+            <label
+              htmlFor="occupation"
+              className="block text-sm font-medium text-gray-300"
+            >
               Ocupación
             </label>
-            <input
+            <ModernInput
               id="occupation"
               type="text"
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={occupation}
               onChange={(e) => setOccupation(e.target.value)}
             />
@@ -166,38 +184,33 @@ const ProfileSettings = ({ user, onUpdateProfile }) => {
 
           {/* Theme Selector */}
           <div>
-             <label htmlFor="theme-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="theme-select"
+              className="block text-sm font-medium text-gray-300"
+            >
               Tema Visual
             </label>
-            <select
+            <ModernSelect
               id="theme-select"
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
               value={selectedTheme}
               onChange={handleThemeChange}
-            >
-              {themes.map(theme => (
-                <option key={theme.value} value={theme.value}>{theme.name}</option>
-              ))}
-            </select>
+              options={themes}
+            />
           </div>
 
-
-          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-          {success && <p className="text-sm text-emerald-500 text-center">{success}</p>}
+          {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+          {success && (
+            <p className="text-sm text-emerald-400 text-center">{success}</p>
+          )}
           <div>
-            <button
-              type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? 'Actualizando...' : 'Actualizar Perfil'}
-            </button>
+            <ModernButton type="submit" className="w-full" disabled={loading}>
+              {loading ? "Actualizando..." : "Actualizar Perfil"}
+            </ModernButton>
           </div>
         </form>
-      </div>
+      </GlassmorphicCard>
     </div>
   );
 };
 
 export default ProfileSettings;
-// DONE

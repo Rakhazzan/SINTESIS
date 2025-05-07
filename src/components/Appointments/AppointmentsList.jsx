@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
+import GlassmorphicCard from '../GlassmorphicCard';
+import ModernButton from '../ModernButton';
 
 const AppointmentsList = ({ patients, onEdit, onDelete, onAddAppointment }) => {
   const [appointments, setAppointments] = useState([]);
@@ -97,21 +99,21 @@ const AppointmentsList = ({ patients, onEdit, onDelete, onAddAppointment }) => {
   };
 
 
-  if (loading) return <div className="p-6 text-center text-gray-600 dark:text-gray-400">Cargando citas...</div>;
-  if (error) return <div className="p-6 text-center text-red-500">Error: {error}</div>;
+  if (loading) return <div className="p-6 text-center text-gray-300">Cargando citas...</div>;
+  if (error) return <div className="p-6 text-center text-red-400">Error: {error}</div>;
 
   const filteredAppointments = filterAppointments(appointments);
 
   return (
-    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
+    <div className="p-6">
        <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Lista de Citas</h2>
+        <h2 className="text-2xl font-bold text-white">Lista de Citas</h2>
         <div className="flex items-center space-x-4">
              {/* Filter Menu Button */}
             <div className="relative">
                 <button
                     onClick={() => setShowFilterMenu(!showFilterMenu)}
-                    className="p-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    className="p-2 rounded-md bg-white bg-opacity-10 text-gray-300 hover:bg-white hover:bg-opacity-20 transition-colors"
                     aria-label="Filtrar citas"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,64 +121,63 @@ const AppointmentsList = ({ patients, onEdit, onDelete, onAddAppointment }) => {
                     </svg>
                 </button>
                  {showFilterMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50">
-                        <button onClick={() => { setFilter('all'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left">Todas</button>
-                        <button onClick={() => { setFilter('today'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left">Hoy</button>
-                        <button onClick={() => { setFilter('tomorrow'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left">Mañana</button>
-                        <button onClick={() => { setFilter('this_week'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left">Esta Semana</button>
-                         <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-                        <button onClick={() => { setFilter('morning'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left">Mañana (Hora)</button>
-                        <button onClick={() => { setFilter('afternoon'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left">Tarde (Hora)</button>
-                        <button onClick={() => { setFilter('evening'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left">Noche (Hora)</button>
+                    <div className="absolute right-0 mt-2 w-48 bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-md shadow-lg py-1 ring-1 ring-white ring-opacity-10 z-50">
+                        <button onClick={() => { setFilter('all'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left">Todas</button>
+                        <button onClick={() => { setFilter('today'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left">Hoy</button>
+                        <button onClick={() => { setFilter('tomorrow'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left">Mañana</button>
+                        <button onClick={() => { setFilter('this_week'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left">Esta Semana</button>
+                         <div className="border-t border-white border-opacity-10 my-1"></div>
+                        <button onClick={() => { setFilter('morning'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left">Mañana (Hora)</button>
+                        <button onClick={() => { setFilter('afternoon'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left">Tarde (Hora)</button>
+                        <button onClick={() => { setFilter('evening'); setShowFilterMenu(false); }} className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left">Noche (Hora)</button>
                     </div>
                 )}
             </div>
 
-            <button
+            <ModernButton
               onClick={onAddAppointment}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               Agregar Cita
-            </button>
+            </ModernButton>
         </div>
       </div>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-colors">
+      <GlassmorphicCard>
         {filteredAppointments.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-400 text-center">No hay citas programadas que coincidan con el filtro.</p>
+          <p className="text-gray-300 text-center">No hay citas programadas que coincidan con el filtro.</p>
         ) : (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+          <ul className="divide-y divide-white divide-opacity-10">
             {filteredAppointments.map((appointment) => (
               <li key={appointment.id} className="py-4 flex justify-between items-center">
                 <div>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{appointment.title}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Paciente: {appointment.patients?.name || 'Desconocido'}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Fecha: {appointment.date} Hora: {appointment.time}</p>
+                  <p className="text-lg font-semibold text-white">{appointment.title}</p>
+                  <p className="text-sm text-gray-300">Paciente: {appointment.patients?.name || 'Desconocido'}</p>
+                  <p className="text-sm text-gray-300">Fecha: {appointment.date} Hora: {appointment.time}</p>
                 </div>
                 <div className="flex space-x-3">
-                   <button
+                   <ModernButton
                     onClick={() => handleViewClick(appointment)}
-                    className="px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 transition-colors"
+                    className="px-3 py-1 text-xs bg-emerald-500 hover:bg-emerald-600 from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500"
                   >
                     Ver Cita
-                  </button>
-                  <button
+                  </ModernButton>
+                  <ModernButton
                     onClick={() => onEdit(appointment)}
-                    className="px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                    className="px-3 py-1 text-xs"
                   >
                     Editar
-                  </button>
-                  <button
+                  </ModernButton>
+                  <ModernButton
                     onClick={() => handleDeleteClick(appointment.id)}
-                    className="px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 transition-colors"
+                    className="px-3 py-1 text-xs bg-orange-400 hover:bg-orange-500 from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-400"
                   >
                     Eliminar
-                  </button>
+                  </ModernButton>
                 </div>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </GlassmorphicCard>
     </div>
   );
 };

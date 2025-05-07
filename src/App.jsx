@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './services/supabase';
 
-import ThemeSwitch from './components/ThemeSwitch';
 import AuthLoginForm from './components/Auth/AuthLoginForm';
 import AuthRegisterForm from './components/Auth/AuthRegisterForm';
 import LayoutHeader from './components/Layout/LayoutHeader';
@@ -13,34 +12,45 @@ import AppointmentsList from './components/Appointments/AppointmentsList';
 import AppointmentsForm from './components/Appointments/AppointmentsForm';
 import MessagesChat from './components/Messages/MessagesChat';
 import ProfileSettings from './components/Profile/ProfileSettings';
+import AnimatedBackground from './components/AnimatedBackground';
+
 
 const App = () => {
   const [user, setUser] = useState(null);
-  const [currentPage, setCurrentPage] = useState(localStorage.getItem('currentPage') || 'dashboard');
+  const [currentPage, setCurrentPage] = useState(localStorage.getItem('currentPage') || 'dashboard'); // Read from localStorage
   const [showPatientForm, setShowPatientForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
-  const [patients, setPatients] = useState([]);
+  const [patients, setPatients] = useState([]); // Data will come from Supabase
   const [loadingPatients, setLoadingPatients] = useState(true);
   const [errorPatients, setErrorPatients] = useState(null);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
       if (session?.user) {
+        // If user logs in, navigate to the last page or dashboard
         const lastPage = localStorage.getItem('currentPage') || 'dashboard';
         setCurrentPage(lastPage);
       } else {
+        // If user logs out, go to login page
         setCurrentPage('login');
         localStorage.removeItem('currentPage');
       }
     });
 
+    // Initial check
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user || null);
-      setCurrentPage(user ? localStorage.getItem('currentPage') || 'dashboard' : 'login');
+      if (user) {
+         const lastPage = localStorage.getItem('currentPage') || 'dashboard';
+         setCurrentPage(lastPage);
+      } else {
+        setCurrentPage('login');
+      }
     });
 
     return () => {
@@ -49,61 +59,64 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('currentPage', currentPage);
+      localStorage.setItem('currentPage', currentPage);
   }, [currentPage]);
+
 
   useEffect(() => {
     if (user) {
       fetchPatients();
       fetchUnreadMessagesCount(user.id);
 
-      const messagesChannel = supabase
+       const messagesChannel = supabase
         .channel('unread_messages')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'messages',
-          filter: `receiver_id=eq.${user.id}`,
-        }, () => {
-          fetchUnreadMessagesCount(user.id);
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, () => {
+           fetchUnreadMessagesCount(user.id);
         })
         .subscribe();
 
       return () => {
         supabase.removeChannel(messagesChannel);
       };
+
     } else {
       setPatients([]);
       setUnreadMessagesCount(0);
     }
   }, [user]);
 
+
   const fetchPatients = async () => {
     setLoadingPatients(true);
-    const { data, error } = await supabase.from('patients').select('*').order('name', { ascending: true });
+    const { data, error } = await supabase
+      .from('patients')
+      .select('*')
+      .order('name', { ascending: true });
+
     setLoadingPatients(false);
     if (error) {
       setErrorPatients(error.message);
-      console.error("Error fetching patients:", error.message);
+      console.error("Error fetching patients in App:", error.message);
     } else {
       setPatients(data || []);
     }
   };
 
   const fetchUnreadMessagesCount = async (userId) => {
-    const { count, error } = await supabase
-      .from('messages')
-      .select('*', { count: 'exact', head: true })
-      .eq('receiver_id', userId)
-      .eq('is_read', false);
+      const { count, error } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', userId)
+        .eq('is_read', false);
 
-    if (error) {
-      console.error("Error fetching unread messages count:", error.message);
-      setUnreadMessagesCount(0);
-    } else {
-      setUnreadMessagesCount(count || 0);
-    }
+      if (error) {
+        console.error("Error fetching unread messages count:", error.message);
+        setUnreadMessagesCount(0);
+      } else {
+        setUnreadMessagesCount(count || 0);
+      }
   };
+
 
   const handleLoginSuccess = (loggedInUser) => {
     setUser(loggedInUser);
@@ -129,6 +142,7 @@ const App = () => {
     setCurrentPage(page);
   };
 
+  // Lógica de Pacientes
   const handleAddPatient = () => {
     setEditingPatient(null);
     setShowPatientForm(true);
@@ -141,22 +155,29 @@ const App = () => {
 
   const handlePatientFormSave = () => {
     setShowPatientForm(false);
-    fetchPatients();
+    fetchPatients(); // Refresh patients list after save
   };
 
   const handleDeletePatient = async (patientId) => {
-    const { error } = await supabase.from('patients').delete().eq('id', patientId);
+    const { error } = await supabase
+      .from('patients')
+      .delete()
+      .eq('id', patientId);
+
     if (error) {
       console.error("Error deleting patient:", error.message);
     } else {
-      fetchPatients();
+      fetchPatients(); // Refresh patients list after delete
     }
   };
 
   const handleViewPatientAppointments = (patientId) => {
+    // Implementar lógica para filtrar citas por paciente
     console.log('Ver citas del paciente:', patientId);
+    // Podríamos cambiar a una vista de citas filtrada
   };
 
+  // Lógica de Citas
   const handleAddAppointment = () => {
     setEditingAppointment(null);
     setShowAppointmentForm(true);
@@ -169,14 +190,22 @@ const App = () => {
 
   const handleAppointmentFormSave = () => {
     setShowAppointmentForm(false);
+    // AppointmentsList component will fetch its own data
   };
 
   const handleDeleteAppointment = async (appointmentId) => {
-    const { error } = await supabase.from('appointments').delete().eq('id', appointmentId);
+    const { error } = await supabase
+      .from('appointments')
+      .delete()
+      .eq('id', appointmentId);
+
     if (error) {
       console.error("Error deleting appointment:", error.message);
+    } else {
+      // AppointmentsList component will fetch its own data
     }
   };
+
 
   const renderPage = () => {
     if (!user) {
@@ -187,11 +216,12 @@ const App = () => {
     }
 
     return (
-      <div className="flex h-screen transition-colors">
+      <div className="flex h-screen bg-modern-black text-white font-sans">
+        <AnimatedBackground /> {/* Add animated background */}
         <LayoutSidebar currentPage={currentPage} onNavigate={handleNavigate} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <LayoutHeader user={user} onLogout={handleLogout} onNavigate={handleNavigate} unreadMessagesCount={unreadMessagesCount} />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar"> {/* Add custom-scrollbar class */}
             {currentPage === 'dashboard' && <DashboardOverview user={user} />}
             {currentPage === 'patients' && (
               <PatientsList
@@ -203,7 +233,7 @@ const App = () => {
             )}
             {currentPage === 'appointments' && (
               <AppointmentsList
-                patients={patients}
+                patients={patients} // Pass patients for dropdown in form
                 onEdit={handleEditAppointment}
                 onDelete={handleDeleteAppointment}
                 onAddAppointment={handleAddAppointment}
@@ -213,7 +243,6 @@ const App = () => {
             {currentPage === 'profile' && <ProfileSettings user={user} />}
           </main>
         </div>
-
         {showPatientForm && (
           <PatientsForm
             patient={editingPatient}
@@ -221,10 +250,10 @@ const App = () => {
             onCancel={() => setShowPatientForm(false)}
           />
         )}
-        {showAppointmentForm && (
+         {showAppointmentForm && (
           <AppointmentsForm
             appointment={editingAppointment}
-            patients={patients}
+            patients={patients} // Pass patients to appointment form
             onSave={handleAppointmentFormSave}
             onCancel={() => setShowAppointmentForm(false)}
           />
@@ -233,12 +262,7 @@ const App = () => {
     );
   };
 
-  return (
-    <>
-      <ThemeSwitch />
-      {renderPage()}
-    </>
-  );
+  return renderPage();
 };
 
 export default App;
