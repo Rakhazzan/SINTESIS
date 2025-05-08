@@ -19,9 +19,10 @@ const LayoutSidebar = ({ currentPage, onNavigate }) => {
                 onClick={() => onNavigate(item.page)}
                 className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
                   currentPage === item.page
-                    ? 'bg-modern-primary text-white'
+                    ? 'bg-modern-accent-dynamic text-white'
                     : 'text-gray-300 hover:bg-white hover:bg-opacity-10 hover:text-white'
                 }`}
+                 style={{ '--color-accent-primary': 'var(--color-accent-primary, #800080)' }} // Default accent color
               >
                 {item.name}
               </button>

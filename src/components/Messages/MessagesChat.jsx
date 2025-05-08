@@ -176,9 +176,10 @@ const MessagesChat = ({ user }) => {
                     <div
                       className={`max-w-xs px-4 py-2 rounded-lg ${
                         message.sender_id === user?.id
-                          ? 'bg-modern-primary text-white'
+                          ? 'bg-modern-accent-dynamic text-white'
                           : 'bg-white bg-opacity-10 text-gray-200'
                       }`}
+                       style={{ '--color-accent-primary': 'var(--color-accent-primary, #800080)' }} // Default accent color
                     >
                       <p className="text-sm">{message.message}</p>
                       <span className="block text-xs mt-1 opacity-75">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>

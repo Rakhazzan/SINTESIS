@@ -9,7 +9,7 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredPatients, setFilteredPatients] = useState([]);
+  // Removed the duplicate declaration of filteredPatients here
 
 
   useEffect(() => {
@@ -26,18 +26,11 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
     };
   }, []);
 
-  useEffect(() => {
-      if (searchTerm) {
-          setFilteredPatients(
-              patients.filter(patient =>
-                  patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  patient.telefono?.includes(searchTerm)
-              )
-          );
-      } else {
-          setFilteredPatients(patients);
-      }
-  }, [searchTerm, patients]);
+  // The filtering logic is now directly used when rendering
+  const filteredPatients = searchTerm ? patients.filter(patient =>
+      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.telefono?.includes(searchTerm)
+  ) : patients;
 
 
   const fetchPatients = async () => {
@@ -59,12 +52,14 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
   if (loading) return <div className="p-6 text-center text-gray-300">Cargando pacientes...</div>;
   if (error) return <div className="p-6 text-center text-red-400">Error: {error}</div>;
 
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-white">Lista de Pacientes</h2>
         <ModernButton
           onClick={onAddPatient}
+          className="px-3 py-1 text-xs bg-emerald-500 hover:bg-emerald-600 from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500"
         >
           Agregar Paciente
         </ModernButton>
@@ -92,7 +87,7 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
                 <div className="flex space-x-3">
                   <ModernButton
                     onClick={() => onViewAppointments(patient.id)}
-                    className="px-3 py-1 text-xs"
+                    className="px-3 py-1 text-xs bg-emerald-500 hover:bg-emerald-600 from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500"
                   >
                     Ver Citas
                   </ModernButton>
@@ -104,7 +99,7 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
                   </ModernButton>
                   <ModernButton
                     onClick={() => onDelete(patient.id)}
-                    className="px-3 py-1 text-xs bg-orange-400 hover:bg-orange-500 from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-400"
+                    className="px-3 py-1 text-xs bg-red-500 hover:bg-red-600 from-red-500 to-red-600 hover:from-red-600 hover:to-red-500"
                   >
                     Eliminar
                   </ModernButton>
@@ -119,3 +114,4 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
 };
 
 export default PatientsList;
+// DONE
