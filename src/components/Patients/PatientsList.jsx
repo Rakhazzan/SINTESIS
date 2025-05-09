@@ -1,22 +1,21 @@
+// PatientsList.jsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import GlassmorphicCard from '../GlassmorphicCard';
 import ModernButton from '../ModernButton';
 import ModernInput from '../ModernInput';
 
-const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) => {
+const PatientsList = ({ onEdit, onDelete, onAddPatient, onViewAppointments }) => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  // Removed the duplicate declaration of filteredPatients here
-
 
   useEffect(() => {
     fetchPatients();
     const channel = supabase
       .channel('patients')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, () => {
         fetchPatients(); // Refetch data on changes
       })
       .subscribe();
@@ -26,55 +25,43 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
     };
   }, []);
 
-  // The filtering logic is now directly used when rendering
-  const filteredPatients = searchTerm ? patients.filter(patient =>
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.telefono?.includes(searchTerm)
-  ) : patients;
-
-
   const fetchPatients = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('patients')
-      .select('*')
-      .order('name', { ascending: true });
-
+    const { data, error } = await supabase.from('patients').select('*').order('name', { ascending: true });
     setLoading(false);
-    if (error) {
-      setError(error.message);
-      console.error("Error fetching patients:", error.message);
-    } else {
-      setPatients(data || []);
-    }
+    if (error) setError(error.message);
+    else setPatients(data || []);
   };
+
+  const filteredPatients = searchTerm
+    ? patients.filter((patient) =>
+        patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.telefono?.includes(searchTerm)
+      )
+    : patients;
 
   if (loading) return <div className="p-6 text-center text-gray-300">Cargando pacientes...</div>;
   if (error) return <div className="p-6 text-center text-red-400">Error: {error}</div>;
-
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-white">Lista de Pacientes</h2>
-        <ModernButton
-          onClick={onAddPatient}
-          className="px-3 py-1 text-xs bg-emerald-500 hover:bg-emerald-600 from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500"
-        >
+        <ModernButton onClick={onAddPatient} className="px-3 py-1 text-xs bg-emerald-500">
           Agregar Paciente
         </ModernButton>
       </div>
-       <div className="mb-6">
-            <ModernInput
-                type="text"
-                placeholder="Buscar paciente por nombre o teléfono..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
-        </div>
+      <div className="mb-6">
+        <ModernInput
+          type="text"
+          placeholder="Buscar paciente por nombre o teléfono..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
       <GlassmorphicCard>
         {filteredPatients.length === 0 ? (
-          <p className="text-gray-300 text-center">No hay pacientes registrados que coincidan con la búsqueda.</p>
+          <p className="text-gray-300 text-center">No hay pacientes registrados.</p>
         ) : (
           <ul className="divide-y divide-white divide-opacity-10">
             {filteredPatients.map((patient) => (
@@ -86,20 +73,17 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
                 </div>
                 <div className="flex space-x-3">
                   <ModernButton
-                    onClick={() => onViewAppointments(patient.id)}
-                    className="px-3 py-1 text-xs bg-emerald-500 hover:bg-emerald-600 from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500"
+                    onClick={() => onViewAppointments(patient.name)}
+                    className="px-3 py-1 text-xs bg-indigo-500"
                   >
                     Ver Citas
                   </ModernButton>
-                  <ModernButton
-                    onClick={() => onEdit(patient)}
-                    className="px-3 py-1 text-xs"
-                  >
+                  <ModernButton onClick={() => onEdit(patient)} className="px-3 py-1 text-xs">
                     Editar
                   </ModernButton>
                   <ModernButton
                     onClick={() => onDelete(patient.id)}
-                    className="px-3 py-1 text-xs bg-red-500 hover:bg-red-600 from-red-500 to-red-600 hover:from-red-600 hover:to-red-500"
+                    className="px-3 py-1 text-xs bg-red-500"
                   >
                     Eliminar
                   </ModernButton>
@@ -114,4 +98,3 @@ const PatientsList = ({ onEdit, onDelete, onViewAppointments, onAddPatient }) =>
 };
 
 export default PatientsList;
-// DONE

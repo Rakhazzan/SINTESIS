@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
+
 // Registramos ScrollTrigger con GSAP
 gsap.registerPlugin(ScrollTrigger);
 
@@ -113,7 +114,7 @@ const AnimatedLanding = ({ onAnimationComplete }) => {
 
     return (
         <>
-          <style jsx global>{`
+          <style>{`
             @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap');
             @import url('https://unpkg.com/normalize.css') layer(normalize);
 

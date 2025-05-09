@@ -1,25 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../services/supabase";
+import { useLocation, useNavigate } from "react-router-dom";
 import GlassmorphicCard from "../GlassmorphicCard";
 import ModernButton from "../ModernButton";
+import ModernInput from "../ModernInput";
 
-const AppointmentsList = ({ patients, onEdit, onDelete, onAddAppointment }) => {
+const AppointmentsList = ({ onEdit, onDelete, onAddAppointment }) => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState("all"); // 'all', 'today', 'tomorrow', 'this_week', 'morning', 'afternoon', 'evening'
+  const [filter, setFilter] = useState("all");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = new URLSearchParams(location.search);
+  const initialSearch = params.get("search") || "";
+  const patientFilter = params.get("patient") || "";
 
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  
   useEffect(() => {
     fetchAppointments();
+
     const channel = supabase
       .channel("appointments")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "appointments" },
-        (payload) => {
-          fetchAppointments(); // Refetch data on changes
-        }
+        () => fetchAppointments()
       )
       .subscribe();
 
@@ -30,11 +38,18 @@ const AppointmentsList = ({ patients, onEdit, onDelete, onAddAppointment }) => {
 
   const fetchAppointments = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from("appointments")
-      .select("*, patients(name)") // Select appointment data and patient name
+      .select("*, patients(id, name, telefono)")
       .order("date", { ascending: true })
       .order("time", { ascending: true });
+    
+    // Apply patient filter if provided
+    if (patientFilter) {
+      query = query.eq("name", patientFilter);
+    }
+
+    const { data, error } = await query;
 
     setLoading(false);
     if (error) {
@@ -55,18 +70,11 @@ const AppointmentsList = ({ patients, onEdit, onDelete, onAddAppointment }) => {
         .from("appointments")
         .delete()
         .eq("id", appointmentId);
-
-      if (error) {
-        console.error("Error deleting appointment:", error.message);
-      } else {
-        // fetchAppointments is triggered by the channel listener
-      }
+      if (error) console.error("Error deleting appointment:", error.message);
     }
   };
 
   const handleViewClick = (appointment) => {
-    // Implement logic to show appointment details, e.g., in a modal
-    console.log("Viewing appointment:", appointment);
     alert(
       `Detalles de la Cita:\nTítulo: ${
         appointment.title
@@ -76,34 +84,54 @@ const AppointmentsList = ({ patients, onEdit, onDelete, onAddAppointment }) => {
     );
   };
 
+  const handleClearFilters = () => {
+    // Clear all filters and navigate back to appointments page without params
+    navigate('/appointments');
+    setSearchTerm('');
+  };
+
   const filterAppointments = (apps) => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const endOfWeek = new Date(today);
-    endOfWeek.setDate(endOfWeek.getDate() + (7 - today.getDay())); // End of current week
+    endOfWeek.setDate(today.getDate() + (7 - today.getDay()));
 
     return apps.filter((appointment) => {
       const appointmentDate = new Date(appointment.date);
       const [hour] = appointment.time.split(":").map(Number);
 
-      switch (filter) {
-        case "today":
-          return appointmentDate.toDateString() === today.toDateString();
-        case "tomorrow":
-          return appointmentDate.toDateString() === tomorrow.toDateString();
-        case "this_week":
-          return appointmentDate >= today && appointmentDate <= endOfWeek;
-        case "morning":
-          return hour >= 6 && hour < 12;
-        case "afternoon":
-          return hour >= 12 && hour < 18;
-        case "evening":
-          return hour >= 18 || hour < 6; // Evening/Night
-        case "all":
-        default:
-          return true;
-      }
+      const matchesFilter = (() => {
+        switch (filter) {
+          case "today":
+            return appointmentDate.toDateString() === today.toDateString();
+          case "tomorrow":
+            return appointmentDate.toDateString() === tomorrow.toDateString();
+          case "this_week":
+            return appointmentDate >= today && appointmentDate <= endOfWeek;
+          case "morning":
+            return hour >= 6 && hour < 12;
+          case "afternoon":
+            return hour >= 12 && hour < 18;
+          case "evening":
+            return hour >= 18 || hour < 6;
+          case "all":
+          default:
+            return true;
+        }
+      })();
+
+      const matchesSearch =
+        appointment.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        appointment.description
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        appointment.patients?.name
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        appointment.patients?.telefono?.includes(searchTerm);
+
+      return matchesFilter && matchesSearch;
     });
   };
 
@@ -119,9 +147,11 @@ const AppointmentsList = ({ patients, onEdit, onDelete, onAddAppointment }) => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Lista de Citas</h2>
+        <h2 className="text-2xl font-bold text-white">
+          {patientFilter ? `Citas del Paciente` : "Lista de Citas"}
+        </h2>
         <div className="flex items-center space-x-4">
-          {/* Filter Menu Button */}
+          {/* Filtro de horario */}
           <div className="relative">
             <button
               onClick={() => setShowFilterMenu(!showFilterMenu)}
@@ -145,74 +175,40 @@ const AppointmentsList = ({ patients, onEdit, onDelete, onAddAppointment }) => {
             </button>
             {showFilterMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-md shadow-lg py-1 ring-1 ring-white ring-opacity-10 z-50">
-                <button
-                  onClick={() => {
-                    setFilter("all");
-                    setShowFilterMenu(false);
-                  }}
-                  className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left"
-                >
-                  Todas
-                </button>
-                <button
-                  onClick={() => {
-                    setFilter("today");
-                    setShowFilterMenu(false);
-                  }}
-                  className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left"
-                >
-                  Hoy
-                </button>
-                <button
-                  onClick={() => {
-                    setFilter("tomorrow");
-                    setShowFilterMenu(false);
-                  }}
-                  className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left"
-                >
-                  Mañana
-                </button>
-                <button
-                  onClick={() => {
-                    setFilter("this_week");
-                    setShowFilterMenu(false);
-                  }}
-                  className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left"
-                >
-                  Esta Semana
-                </button>
-                <div className="border-t border-white border-opacity-10 my-1"></div>
-                <button
-                  onClick={() => {
-                    setFilter("morning");
-                    setShowFilterMenu(false);
-                  }}
-                  className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left"
-                >
-                  Mañana (Hora)
-                </button>
-                <button
-                  onClick={() => {
-                    setFilter("afternoon");
-                    setShowFilterMenu(false);
-                  }}
-                  className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left"
-                >
-                  Tarde (Hora)
-                </button>
-                <button
-                  onClick={() => {
-                    setFilter("evening");
-                    setShowFilterMenu(false);
-                  }}
-                  className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left"
-                >
-                  Noche (Hora)
-                </button>
+                {[
+                  { key: "all", label: "Todas" },
+                  { key: "today", label: "Hoy" },
+                  { key: "tomorrow", label: "Mañana" },
+                  { key: "this_week", label: "Esta Semana" },
+                  { key: "morning", label: "Mañana (Hora)" },
+                  { key: "afternoon", label: "Tarde (Hora)" },
+                  { key: "evening", label: "Noche (Hora)" },
+                ].map((option) => (
+                  <button
+                    key={option.key}
+                    onClick={() => {
+                      setFilter(option.key);
+                      setShowFilterMenu(false);
+                    }}
+                    className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left"
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             )}
           </div>
-
+          
+          {/* Clear filters button (only visible when filtering by patient) */}
+          {patientFilter && (
+            <ModernButton
+              onClick={handleClearFilters}
+              className="px-3 py-1 text-xs bg-indigo-500 hover:bg-indigo-600 from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-500"
+            >
+              Ver Todas las Citas
+            </ModernButton>
+          )}
+          
           <ModernButton
             onClick={onAddAppointment}
             className="px-3 py-1 text-xs bg-emerald-500 hover:bg-emerald-600 from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500"
@@ -221,10 +217,21 @@ const AppointmentsList = ({ patients, onEdit, onDelete, onAddAppointment }) => {
           </ModernButton>
         </div>
       </div>
+
+      {/* Barra de búsqueda */}
+      <div className="mb-4">
+        <ModernInput
+          type="text"
+          placeholder="Buscar por título, paciente o descripción"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
       <GlassmorphicCard>
         {filteredAppointments.length === 0 ? (
           <p className="text-gray-300 text-center">
-            No hay citas programadas que coincidan con el filtro.
+            No hay citas que coincidan con el filtro y la búsqueda.
           </p>
         ) : (
           <ul className="divide-y divide-white divide-opacity-10">

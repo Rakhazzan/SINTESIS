@@ -28,19 +28,7 @@ const MessagesChat = ({ user }) => {
             event: 'INSERT',
             schema: 'public',
             table: 'messages',
-            filter: `(sender_id=eq.${selectedUser.id}.and.receiver_id=eq.${user?.id})`
-          },
-          (payload) => {
-            setMessages((prev) => [...prev, payload.new]);
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `(sender_id=eq.${user?.id}.and.receiver_id=eq.${selectedUser.id})`
+            filter: `(sender_id=eq.${selectedUser.id}.and.receiver_id=eq.${user?.id}).or.(sender_id=eq.${user?.id}.and.receiver_id=eq.${selectedUser.id})`
           },
           (payload) => {
             setMessages((prev) => [...prev, payload.new]);
@@ -120,16 +108,24 @@ const MessagesChat = ({ user }) => {
         sender_id: user?.id,
         receiver_id: selectedUser.id,
         message: newMessage,
-        is_read: false // Use is_read as per schema
+        is_read: false, // Use is_read as per schema
+        timestamp: new Date().toISOString() // Add timestamp for immediate display
       };
 
-      const { error } = await supabase.from('messages').insert([messageData]);
+      // Optimistically add the message to the UI first
+      const tempId = `temp-${Date.now()}`;
+      const tempMessage = { ...messageData, id: tempId };
+      setMessages(prevMessages => [...prevMessages, tempMessage]);
+      setNewMessage('');
+
+      // Then send to database
+      const { data, error } = await supabase.from('messages').insert([messageData]).select();
 
       if (error) {
         setError(error.message);
         console.error('Error sending message:', error.message);
-      } else {
-        setNewMessage('');
+        // Remove the temporary message if there was an error
+        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempId));
       }
     }
   };

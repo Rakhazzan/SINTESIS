@@ -41,7 +41,7 @@ const AuthLoginForm = ({ onLoginSuccess, onNavigateRegister }) => {
               type="email"
               autoComplete="email"
               required
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
+              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-dark transition"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -56,7 +56,7 @@ const AuthLoginForm = ({ onLoginSuccess, onNavigateRegister }) => {
               type="password"
               autoComplete="current-password"
               required
-              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-white transition"
+              className="w-full mt-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-blue-600 text-gray-900 dark:text-black transition"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />

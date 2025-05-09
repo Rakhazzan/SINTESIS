@@ -11,6 +11,7 @@ const AppointmentsForm = ({ appointment, patients, onSave, onCancel }) => {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [patientId, setPatientId] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,12 +34,14 @@ const AppointmentsForm = ({ appointment, patients, onSave, onCancel }) => {
       setDate(appointment.date);
       setTime(appointment.time);
       setPatientId(appointment.patient_id);
+      setName(appointment.name);
     } else {
       setTitle('');
       setDescription('');
       setDate('');
       setTime('');
       setPatientId('');
+      setName('');
     }
   }, [appointment]);
 
@@ -88,6 +91,7 @@ const AppointmentsForm = ({ appointment, patients, onSave, onCancel }) => {
       time,
       patient_id: patientId,
       created_by: user.data.user.id,
+      name,
     };
 
     let dbError = null;

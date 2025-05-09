@@ -18,7 +18,7 @@ import ModernButton from "./components/ModernButton";
 
 const App = () => {
   const [user, setUser] = useState(null);
-  const [currentPage, setCurrentPage] = useState(localStorage.getItem('currentPage') || 'landing');
+  const [currentPage, setCurrentPage] = useState(localStorage.getItem('currentPage'));
   const [showPatientForm, setShowPatientForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
@@ -27,6 +27,7 @@ const App = () => {
   const [loadingPatients, setLoadingPatients] = useState(true);
   const [errorPatients, setErrorPatients] = useState(null);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
