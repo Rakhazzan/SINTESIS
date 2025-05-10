@@ -21,7 +21,7 @@ const LayoutHeader = ({ user, onLogout, onNavigate, unreadMessagesCount }) => {
 
   return (
     <header className="w-full bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg shadow-sm p-4 flex justify-between items-center transition-colors z-40 relative">
-      <h1 className="text-xl font-semibold text-white">MediFlow</h1>
+      <h1 className="text-xl font-semibold text-white pl-12">MediFlow</h1>
       <div className="flex items-center space-x-4">
         {/* ThemeSwitch is now hidden and only applies the class */}
         <ThemeSwitch />
@@ -60,16 +60,16 @@ const LayoutHeader = ({ user, onLogout, onNavigate, unreadMessagesCount }) => {
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-md shadow-lg py-1 ring-1 ring-white ring-opacity-10 z-50">
+            <div className="absolute right-0 mt-2 w-48 bg-black bg-opacity-50 backdrop-filter backdrop-blur-lg rounded-md shadow-lg py-1 ring-1 ring-white ring-opacity-100 z-50">
               <button
                 onClick={handleProfileClick}
-                className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left"
+                className="block px-4 py-2 text-sm text-gray-200 hover:bg-grey hover:bg-opacity-100 w-full text-left"
               >
                 Editar perfil
               </button>
               <button
                 onClick={handleLogoutClick}
-                className="block px-4 py-2 text-sm text-gray-200 hover:bg-white hover:bg-opacity-10 w-full text-left"
+                className="block px-4 py-2 text-sm text-gray-200 hover:bg-grey hover:bg-opacity-100 w-full text-left"
               >
                 Cerrar sesión
               </button>

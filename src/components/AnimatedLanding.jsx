@@ -23,20 +23,39 @@ const AnimatedLanding = ({ onAnimationComplete }) => {
         debug: false,
     });
 
-    // Efecto para la tecla Enter
     useEffect(() => {
-        const handleKeyDown = (event) => {
-            if (event.key === 'Enter') {
-                onAnimationComplete();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [onAnimationComplete]);
+      // Keyboard event handling (existing code)
+      const handleKeyDown = (event) => {
+          if (event.key === 'Enter') {
+              onAnimationComplete();
+          }
+      };
+  
+      // Double tap detection for mobile
+      let lastTap = 0;
+      const handleTap = (event) => {
+          const currentTime = new Date().getTime();
+          const tapLength = currentTime - lastTap;
+          
+          // Detect double tap (time between taps less than 300ms)
+          if (tapLength < 300 && tapLength > 0) {
+              onAnimationComplete();
+              event.preventDefault();
+          }
+          
+          lastTap = currentTime;
+      };
+  
+      // Add event listeners
+      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('touchend', handleTap);
+  
+      // Clean up event listeners on unmount
+      return () => {
+          window.removeEventListener('keydown', handleKeyDown);
+          window.removeEventListener('touchend', handleTap);
+      };
+  }, [onAnimationComplete]);
 
     // Efecto para las animaciones con GSAP y ScrollTrigger
     useEffect(() => {

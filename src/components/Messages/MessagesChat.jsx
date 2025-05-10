@@ -1,17 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../services/supabase';
-import GlassmorphicCard from '../GlassmorphicCard';
-import ModernInput from '../ModernInput';
-import ModernButton from '../ModernButton';
+import React, { useState, useEffect, useRef } from "react";
+import { supabase } from "../../services/supabase";
+import GlassmorphicCard from "../GlassmorphicCard";
+import ModernInput from "../ModernInput";
+import ModernButton from "../ModernButton";
 
 const MessagesChat = ({ user }) => {
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const chatContainerRef = useRef(null);
+useEffect(() => {
+  const handleOtherMenus = (e) => {
+    if (e.detail !== 'messages') {
+      setShowUserMenu(false);
+    }
+  };
+  window.addEventListener('hamburger-open', handleOtherMenus);
+  return () => window.removeEventListener('hamburger-open', handleOtherMenus);
+}, []);
 
   useEffect(() => {
     fetchUsers();
@@ -23,12 +33,12 @@ const MessagesChat = ({ user }) => {
       const channel = supabase
         .channel(`chat_${user?.id}_${selectedUser.id}`)
         .on(
-          'postgres_changes',
+          "postgres_changes",
           {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `(sender_id=eq.${selectedUser.id}.and.receiver_id=eq.${user?.id}).or.(sender_id=eq.${user?.id}.and.receiver_id=eq.${selectedUser.id})`
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+            filter: `(sender_id=eq.${selectedUser.id}.and.receiver_id=eq.${user?.id}).or.(sender_id=eq.${user?.id}.and.receiver_id=eq.${selectedUser.id})`,
           },
           (payload) => {
             setMessages((prev) => [...prev, payload.new]);
@@ -46,18 +56,19 @@ const MessagesChat = ({ user }) => {
 
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
   const fetchUsers = async () => {
     const { data, error } = await supabase
-      .from('users') // Assuming 'users' table has id, email, nombre
-      .select('id, nombre')
-      .neq('id', user?.id);
+      .from("users") // Assuming 'users' table has id, email, nombre
+      .select("id, nombre")
+      .neq("id", user?.id);
 
     if (error) {
-      console.error('Error fetching users:', error.message);
+      console.error("Error fetching users:", error.message);
       return;
     }
 
@@ -68,18 +79,18 @@ const MessagesChat = ({ user }) => {
     setLoading(true);
 
     const { data, error } = await supabase
-      .from('messages')
-      .select('*')
+      .from("messages")
+      .select("*")
       .or(
         `and(sender_id.eq.${user?.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user?.id})`
       )
-      .order('timestamp', { ascending: true });
+      .order("timestamp", { ascending: true });
 
     setLoading(false);
 
     if (error) {
       setError(error.message);
-      console.error('Error fetching messages:', error.message);
+      console.error("Error fetching messages:", error.message);
     } else {
       const relevantMessages = data || [];
       setMessages(relevantMessages);
@@ -90,12 +101,12 @@ const MessagesChat = ({ user }) => {
 
       if (unreadMessageIds.length > 0) {
         const { error: updateError } = await supabase
-          .from('messages')
+          .from("messages")
           .update({ is_read: true }) // Use is_read as per schema
-          .in('id', unreadMessageIds);
+          .in("id", unreadMessageIds);
 
         if (updateError) {
-          console.error('Error marking messages as read:', updateError.message);
+          console.error("Error marking messages as read:", updateError.message);
         }
       }
     }
@@ -109,40 +120,127 @@ const MessagesChat = ({ user }) => {
         receiver_id: selectedUser.id,
         message: newMessage,
         is_read: false, // Use is_read as per schema
-        timestamp: new Date().toISOString() // Add timestamp for immediate display
+        timestamp: new Date().toISOString(), // Add timestamp for immediate display
       };
 
       // Optimistically add the message to the UI first
       const tempId = `temp-${Date.now()}`;
       const tempMessage = { ...messageData, id: tempId };
-      setMessages(prevMessages => [...prevMessages, tempMessage]);
-      setNewMessage('');
+      setMessages((prevMessages) => [...prevMessages, tempMessage]);
+      setNewMessage("");
 
       // Then send to database
-      const { data, error } = await supabase.from('messages').insert([messageData]).select();
+      const { data, error } = await supabase
+        .from("messages")
+        .insert([messageData])
+        .select();
 
       if (error) {
         setError(error.message);
-        console.error('Error sending message:', error.message);
+        console.error("Error sending message:", error.message);
         // Remove the temporary message if there was an error
-        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempId));
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg.id !== tempId)
+        );
       }
     }
   };
 
   return (
     <div className="flex h-full p-6">
-      {/* User List Sidebar */}
-      <GlassmorphicCard className="w-64 mr-6 flex flex-col">
-        <h3 className="text-lg font-semibold text-white p-4 border-b border-white border-opacity-10">Usuarios</h3>
+      {/* Button to toggle User menu on mobile */}
+      <button
+        className="md:hidden fixed top-32 left-4 z-50 bg-modern-accent-dynamic p-2 rounded-md text-white"
+        style={{
+          "--color-accent-primary": "var(--color-accent-primary, #800080)",
+        }}
+        onClick={() => {
+          const newState = !showUserMenu;
+          setShowUserMenu(newState);
+          if (newState) {
+            window.dispatchEvent(new CustomEvent('hamburger-open', { detail: 'messages' }));
+          }
+        }}
+        
+        aria-label="Abrir menú de usuarios"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+
+      {/* User List Sidebar - visible in mobile and desktop */}
+      {showUserMenu && (
+        <div
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
+          onClick={() => {
+            setSelectedUser(otherUser);
+            setShowUserMenu(false); // <-- mantiene esto
+          }}
+          
+        >
+          <div
+            className="absolute left-0 top-0 bottom-0 w-64 bg-white bg-opacity-10 backdrop-blur-lg p-4 pt-28" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-white mb-4 border-b border-white border-opacity-10">
+              Usuarios
+            </h3>
+            <ul className="overflow-y-auto max-h-[80vh]">
+              {users.map((otherUser) => (
+                <li key={otherUser.id}>
+                  <button
+                    onClick={() => {
+                      setSelectedUser(otherUser);
+                      setShowUserMenu(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 hover:bg-white hover:bg-opacity-10 transition-colors rounded-md ${
+                      selectedUser?.id === otherUser.id
+                        ? "bg-white bg-opacity-20"
+                        : ""
+                    }`}
+                  >
+                    <p className="text-white font-medium">
+                      {otherUser.nombre || otherUser.email}
+                    </p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Sidebar visible only on desktop */}
+      <GlassmorphicCard className="w-64 mr-6 flex-col hidden md:flex">
+        <h3 className="text-lg font-semibold text-white p-4 border-b border-white border-opacity-10">
+          Usuarios
+        </h3>
         <ul className="flex-grow overflow-y-auto">
-          {users.map(otherUser => (
+          {users.map((otherUser) => (
             <li key={otherUser.id}>
               <button
                 onClick={() => setSelectedUser(otherUser)}
-                className={`w-full text-left px-4 py-3 hover:bg-white hover:bg-opacity-10 transition-colors rounded-md ${selectedUser?.id === otherUser.id ? 'bg-white bg-opacity-20' : ''}`}
+                className={`w-full text-left px-4 py-3 hover:bg-white hover:bg-opacity-10 transition-colors rounded-md ${
+                  selectedUser?.id === otherUser.id
+                    ? "bg-white bg-opacity-20"
+                    : ""
+                }`}
               >
-                <p className="text-white font-medium">{otherUser.nombre || otherUser.email}</p>
+                <p className="text-white font-medium">
+                  {otherUser.nombre || otherUser.email}
+                </p>
               </button>
             </li>
           ))}
@@ -154,37 +252,61 @@ const MessagesChat = ({ user }) => {
         {selectedUser ? (
           <>
             <div className="shadow-sm p-4 border-b border-white border-opacity-10">
-              <h3 className="text-lg font-semibold text-white">{selectedUser.nombre || selectedUser.email}</h3>
+              <h3 className="text-lg font-semibold text-white">
+                {selectedUser.nombre || selectedUser.email}
+              </h3>
             </div>
-            <div ref={chatContainerRef} className="flex-grow overflow-y-auto p-4 space-y-4">
+            <div
+              ref={chatContainerRef}
+              className="flex-grow overflow-y-auto p-4 space-y-4"
+            >
               {loading ? (
-                <div className="text-center text-gray-300">Cargando mensajes...</div>
+                <div className="text-center text-gray-300">
+                  Cargando mensajes...
+                </div>
               ) : error ? (
                 <div className="text-center text-red-400">Error: {error}</div>
               ) : messages.length === 0 ? (
-                <div className="text-center text-gray-300">Inicia una conversación.</div>
+                <div className="text-center text-gray-300">
+                  Inicia una conversación.
+                </div>
               ) : (
                 messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${
+                      message.sender_id === user?.id
+                        ? "justify-end"
+                        : "justify-start"
+                    }`}
                   >
                     <div
                       className={`max-w-xs px-4 py-2 rounded-lg ${
                         message.sender_id === user?.id
-                          ? 'bg-modern-accent-dynamic text-white'
-                          : 'bg-white bg-opacity-10 text-gray-200'
+                          ? "bg-modern-accent-dynamic text-white"
+                          : "bg-white bg-opacity-10 text-gray-200"
                       }`}
-                       style={{ '--color-accent-primary': 'var(--color-accent-primary, #800080)' }} // Default accent color
+                      style={{
+                        "--color-accent-primary":
+                          "var(--color-accent-primary, #800080)",
+                      }} // Default accent color
                     >
                       <p className="text-sm">{message.message}</p>
-                      <span className="block text-xs mt-1 opacity-75">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="block text-xs mt-1 opacity-75">
+                        {new Date(message.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </div>
                   </div>
                 ))
               )}
             </div>
-            <form onSubmit={handleSendMessage} className="mt-4 flex space-x-3 p-4 border-t border-white border-opacity-10">
+            <form
+              onSubmit={handleSendMessage}
+              className="mt-4 flex space-x-3 p-4 border-t border-white border-opacity-10"
+            >
               <ModernInput
                 type="text"
                 placeholder="Escribe un mensaje..."
@@ -192,10 +314,7 @@ const MessagesChat = ({ user }) => {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
               />
-              <ModernButton
-                type="submit"
-                disabled={!newMessage.trim()}
-              >
+              <ModernButton type="submit" disabled={!newMessage.trim()}>
                 Enviar
               </ModernButton>
             </form>

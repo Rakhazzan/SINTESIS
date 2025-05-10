@@ -14,11 +14,10 @@ import MessagesChat from './components/Messages/MessagesChat';
 import ProfileSettings from './components/Profile/ProfileSettings';
 import AnimatedBackground from './components/AnimatedBackground';
 import AnimatedLanding from './components/AnimatedLanding';
-import ModernButton from "./components/ModernButton";
 
 const App = () => {
   const [user, setUser] = useState(null);
-  const [currentPage, setCurrentPage] = useState(localStorage.getItem('currentPage'));
+  const [currentPage, setCurrentPage] = useState(localStorage.getItem('currentPage') || 'landing');
   const [showPatientForm, setShowPatientForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
@@ -27,7 +26,7 @@ const App = () => {
   const [loadingPatients, setLoadingPatients] = useState(true);
   const [errorPatients, setErrorPatients] = useState(null);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
-  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -57,7 +56,9 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('currentPage', currentPage);
+    if (currentPage !== 'landing') {
+      localStorage.setItem('currentPage', currentPage);
+    }
   }, [currentPage]);
 
   useEffect(() => {
@@ -67,13 +68,17 @@ const App = () => {
 
       const messagesChannel = supabase
         .channel('unread_messages')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, () => {
-          fetchUnreadMessagesCount(user.id);
-        })
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` },
+          () => {
+            fetchUnreadMessagesCount(user.id);
+          }
+        )
         .subscribe();
 
       return () => {
-        supabase.removeChannel(messagesChannel);
+        messagesChannel && supabase.removeChannel(messagesChannel);
       };
     } else {
       setPatients([]);
@@ -134,6 +139,7 @@ const App = () => {
 
   const handleNavigate = (page) => {
     setCurrentPage(page);
+    setSidebarOpen(false); // Close sidebar on navigation
   };
 
   const handleAddPatient = () => {
@@ -189,69 +195,93 @@ const App = () => {
     setCurrentPage('login');
   };
 
-  const renderPage = () => {
-    if (!user) {
-      if (currentPage === 'register') {
-        return <AuthRegisterForm onRegisterSuccess={handleRegisterSuccess} onNavigateLogin={() => setCurrentPage('login')} />;
-      }
-      if (currentPage === 'login') {
-        return <AuthLoginForm onLoginSuccess={handleLoginSuccess} onNavigateRegister={() => setCurrentPage('register')} />;
-      }
+  const backgroundElement = <AnimatedBackground />;
+
+  if (!user) {
+    if (currentPage === 'register') {
       return (
-        <div>
-          <AnimatedLanding onAnimationComplete={handleEnterKeyNavigation} />
-        </div>
+        <>
+          {backgroundElement}
+          <AuthRegisterForm onRegisterSuccess={handleRegisterSuccess} onNavigateLogin={() => setCurrentPage('login')} />
+        </>
       );
     }
-
+    if (currentPage === 'login') {
+      return (
+        <>
+          {backgroundElement}
+          <AuthLoginForm onLoginSuccess={handleLoginSuccess} onNavigateRegister={() => setCurrentPage('register')} />
+        </>
+      );
+    }
     return (
-      <div className="flex h-screen bg-modern-black text-white font-sans">
-        <AnimatedBackground />
-        <LayoutSidebar currentPage={currentPage} onNavigate={handleNavigate} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <LayoutHeader user={user} onLogout={handleLogout} onNavigate={handleNavigate} unreadMessagesCount={unreadMessagesCount} />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar">
-            {currentPage === 'dashboard' && <DashboardOverview user={user} />}
-            {currentPage === 'patients' && (
-              <PatientsList
-                onEdit={handleEditPatient}
-                onDelete={handleDeletePatient}
-                onViewPatientAppointments={handleViewPatientAppointments}
-                onAddPatient={handleAddPatient}
-              />
-            )}
-            {currentPage === 'appointments' && (
-              <AppointmentsList
-                patients={patients}
-                onEdit={handleEditAppointment}
-                onDelete={handleDeleteAppointment}
-                onAddAppointment={handleAddAppointment}
-              />
-            )}
-            {currentPage === 'messages' && <MessagesChat user={user} />}
-            {currentPage === 'profile' && <ProfileSettings user={user} />}
-          </main>
-        </div>
-        {showPatientForm && (
-          <PatientsForm
-            patient={editingPatient}
-            onSave={handlePatientFormSave}
-            onCancel={() => setShowPatientForm(false)}
-          />
-        )}
-        {showAppointmentForm && (
-          <AppointmentsForm
-            appointment={editingAppointment}
-            patients={patients}
-            onSave={handleAppointmentFormSave}
-            onCancel={() => setShowAppointmentForm(false)}
-          />
-        )}
-      </div>
+      <>
+        {backgroundElement}
+        <AnimatedLanding onAnimationComplete={handleEnterKeyNavigation} />
+      </>
     );
-  };
+  }
 
-  return renderPage();
+  return (
+    <div className="flex h-screen bg-modern-black text-white font-sans">
+      {backgroundElement}
+      <LayoutSidebar
+        currentPage={currentPage}
+        onNavigate={handleNavigate}
+        isSidebarOpen={isSidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <LayoutHeader
+          user={user}
+          onLogout={handleLogout}
+          onNavigate={handleNavigate}
+          unreadMessagesCount={unreadMessagesCount}
+          isSidebarOpen={isSidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+        />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar">
+          {currentPage === 'dashboard' && <DashboardOverview user={user} />}
+          {currentPage === 'patients' && (
+            <PatientsList
+              onEdit={handleEditPatient}
+              onDelete={handleDeletePatient}
+              onViewPatientAppointments={handleViewPatientAppointments}
+              onAddPatient={handleAddPatient}
+              patients={patients}
+              loading={loadingPatients}
+              error={errorPatients}
+            />
+          )}
+          {currentPage === 'appointments' && (
+            <AppointmentsList
+              patients={patients}
+              onEdit={handleEditAppointment}
+              onDelete={handleDeleteAppointment}
+              onAddAppointment={handleAddAppointment}
+            />
+          )}
+          {currentPage === 'messages' && <MessagesChat user={user} />}
+          {currentPage === 'profile' && <ProfileSettings user={user} />}
+        </main>
+      </div>
+      {showPatientForm && (
+        <PatientsForm
+          patient={editingPatient}
+          onSave={handlePatientFormSave}
+          onCancel={() => setShowPatientForm(false)}
+        />
+      )}
+      {showAppointmentForm && (
+        <AppointmentsForm
+          appointment={editingAppointment}
+          patients={patients}
+          onSave={handleAppointmentFormSave}
+          onCancel={() => setShowAppointmentForm(false)}
+        />
+      )}
+    </div>
+  );
 };
 
 export default App;
